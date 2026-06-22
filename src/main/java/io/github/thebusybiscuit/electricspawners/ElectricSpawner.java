@@ -8,7 +8,9 @@ import io.github.thebusybiscuit.slimefun4.api.researches.Research;
 import io.github.thebusybiscuit.slimefun4.core.attributes.EnergyNetComponent;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockPlaceHandler;
 import io.github.thebusybiscuit.slimefun4.core.networks.energy.EnergyNetComponentType;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
+import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.AbstractMonsterSpawner;
 import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunItem;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
@@ -19,7 +21,6 @@ import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
 import me.mrCookieSlime.Slimefun.api.item_transport.ItemTransportFlow;
-import net.guizhanss.guizhanlib.minecraft.helper.entity.EntityTypeHelper;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -28,6 +29,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 public class ElectricSpawner extends SimpleSlimefunItem<BlockTicker> implements EnergyNetComponent {
 
@@ -39,16 +41,16 @@ public class ElectricSpawner extends SimpleSlimefunItem<BlockTicker> implements 
     public ElectricSpawner(ItemGroup category, String mob, EntityType type, Research research) {
         // @formatter:off
         super(category, new SlimefunItemStack(
-            "ELECTRIC_SPAWNER_" + mob,
-            "db6bd9727abb55d5415265789d4f2984781a343c68dcaf57f554a5e9aa1cd",
-            "&e电力刷怪笼 &7(" + EntityTypeHelper.getName(type) + ")",
-            "",
-            "&8\u21E8 &e\u26A1 &7最大实体数量: 6",
-            "&8\u21E8 &e\u26A1 &7512 J 可储存",
-            "&8\u21E8 &e\u26A1 &7240 J 每个生物"
+                "ELECTRIC_SPAWNER_" + mob,
+                "db6bd9727abb55d5415265789d4f2984781a343c68dcaf57f554a5e9aa1cd",
+                "&eElectric Spawner &7(" +  ChatUtils.humanize(mob) + ")",
+                "",
+                "&8\u21E8 &e\u26A1 &7Max Entity Cap: 6",
+                "&8\u21E8 &e\u26A1 &7512 J Buffer",
+                "&8\u21E8 &e\u26A1 &7240 J/ Mob"
         ), RecipeType.ENHANCED_CRAFTING_TABLE, new ItemStack[] {
             null, SlimefunItems.PLUTONIUM, null,
-            SlimefunItems.ELECTRIC_MOTOR, new CustomItemStack(Material.SPAWNER, "&b已修复的刷怪笼", "&7类型: &b" + ChatUtils.humanize(type.toString())), SlimefunItems.ELECTRIC_MOTOR,
+            SlimefunItems.ELECTRIC_MOTOR, getReinforcedSpawner(type), SlimefunItems.ELECTRIC_MOTOR,
             SlimefunItems.BLISTERING_INGOT_3, SlimefunItems.LARGE_CAPACITOR, SlimefunItems.BLISTERING_INGOT_3
         });
         // @formatter:on
@@ -57,7 +59,7 @@ public class ElectricSpawner extends SimpleSlimefunItem<BlockTicker> implements 
 
         addItemHandler(onBlockPlace());
 
-        new BlockMenuPreset(getId(), "&c电力刷怪笼") {
+        new BlockMenuPreset(getId(), "&cPowered Spawner") {
 
             @Override
             public void init() {
@@ -71,14 +73,14 @@ public class ElectricSpawner extends SimpleSlimefunItem<BlockTicker> implements 
             @Override
             public void newInstance(BlockMenu menu, Block b) {
                 if (!BlockStorage.hasBlockInfo(b) || BlockStorage.getLocationInfo(b.getLocation(), "enabled") == null || BlockStorage.getLocationInfo(b.getLocation(), "enabled").equals("false")) {
-                    menu.replaceExistingItem(4, new CustomItemStack(Material.GUNPOWDER, "&7启用: &4\u2718", "", "&e> 点击启用"));
+                    menu.replaceExistingItem(4, new CustomItemStack(Material.GUNPOWDER, "&7Enabled: &4\u2718", "", "&e> Click to enable"));
                     menu.addMenuClickHandler(4, (p, slot, item, action) -> {
                         BlockStorage.addBlockInfo(b, "enabled", "true");
                         newInstance(menu, b);
                         return false;
                     });
                 } else {
-                    menu.replaceExistingItem(4, new CustomItemStack(Material.REDSTONE, "&7启用: &2\u2714", "", "&e> 点击禁用"));
+                    menu.replaceExistingItem(4, new CustomItemStack(Material.REDSTONE, "&7Enabled: &2\u2714", "", "&e> Click to disable"));
                     menu.addMenuClickHandler(4, (p, slot, item, action) -> {
                         BlockStorage.addBlockInfo(b, "enabled", "false");
                         newInstance(menu, b);
@@ -99,6 +101,19 @@ public class ElectricSpawner extends SimpleSlimefunItem<BlockTicker> implements 
         };
 
         research.addItems(this);
+    }
+
+    private static ItemStack getReinforcedSpawner(EntityType type) {
+        AbstractMonsterSpawner spawner = (AbstractMonsterSpawner) SlimefunItems.REPAIRED_SPAWNER.getItem();
+        ItemStack item = new ItemStack(spawner.getItemForEntityType(type));
+        ItemMeta meta = item.getItemMeta();
+
+        Slimefun.getItemDataService().getItemData(meta).ifPresent(id -> {
+            meta.getPersistentDataContainer().remove(Slimefun.getItemDataService().getKey());
+            item.setItemMeta(meta);
+        });
+
+        return item;
     }
 
     private BlockPlaceHandler onBlockPlace() {

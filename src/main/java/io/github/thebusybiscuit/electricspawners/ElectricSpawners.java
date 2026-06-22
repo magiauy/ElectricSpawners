@@ -7,7 +7,6 @@ import io.github.thebusybiscuit.slimefun4.libraries.dough.config.Config;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.skins.PlayerHead;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.skins.PlayerSkin;
-import net.guizhanss.guizhanlibplugin.updater.GuizhanUpdater;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.EntityType;
@@ -20,24 +19,14 @@ public class ElectricSpawners extends JavaPlugin implements Listener, SlimefunAd
 
     @Override
     public void onEnable() {
-        if (!getServer().getPluginManager().isPluginEnabled("GuizhanLibPlugin")) {
-            getLogger().log(Level.SEVERE, "本插件需要 鬼斩前置库插件(GuizhanLibPlugin) 才能运行!");
-            getLogger().log(Level.SEVERE, "从此处下载: https://50L.cc/gzlib");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
 
         Config cfg = new Config(this);
 
         // Setting up bStats
         new Metrics(this, 6163);
 
-        if (cfg.getBoolean("options.auto-update") && getDescription().getVersion().startsWith("Build")) {
-            GuizhanUpdater.start(this, getFile(), "SlimefunGuguProject", "ElectricSpawners", "master");
-        }
-
-        ItemGroup itemGroup = new ItemGroup(new NamespacedKey(this, "electric_spawners"), new CustomItemStack(PlayerHead.getItemStack(PlayerSkin.fromHashCode("db6bd9727abb55d5415265789d4f2984781a343c68dcaf57f554a5e9aa1cd")), "&9电力刷怪笼"));
-        Research research = new Research(new NamespacedKey(this, "electric_spawners"), 4820, "电力刷怪笼", 30);
+        ItemGroup itemGroup = new ItemGroup(new NamespacedKey(this, "electric_spawners"), new CustomItemStack(PlayerHead.getItemStack(PlayerSkin.fromHashCode("db6bd9727abb55d5415265789d4f2984781a343c68dcaf57f554a5e9aa1cd")), "&9Electric Spawner"));
+        Research research = new Research(new NamespacedKey(this, "electric_spawners"), 4820, "Electric Spawners", 30);
 
         for (String mob : cfg.getStringList("mobs")) {
             try {
